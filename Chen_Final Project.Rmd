@@ -1,0 +1,38 @@
+---
+title: "Chen_Final Project"
+author: "Emma Chen"
+date: "11/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Overview: 
+My project study whether administration of both JAK inhibitors and immune checkpoint blockade therapy (anti-PD1) improves tumor resistance so patients will response to immunotheray better, improve survival and have powerful tumor response. My dataet included immune profile measured by Flow Cytometry and CyTOF of 6 patients’ PBMC blood sample across 6 timepoints as well as clinical data, further allowing me to investigate clinical profile relationship with immune profile on patients.
+
+Introduction: 
+My project is to investigate whether combined administration of JAK inhibitor and immune checkpoint blockade (ICB)–anti-PD1 immunotherapy is better than with only ICB over time. Currently, ICB, either anti-PD1 or anti-CTLA4, is used to treat cancer patients. ICB functions as taking the brake off immune system’s response to cancer. However, many patients treated with ICB relapsed or their cancer progresses, leading to the idea that taking one break off is not enough, multiple brakes needs to be released. Dr. Minn at Penn Medicine found out that interferon (IFN) pathway is critical to tumor’s resistance to immunotherapy, which also means shutting down the IFN pathway may improve the response to ICB. He found out that Janus kinase (JAK) inhibitor could overcome the resistance to immunotherapy, improving survival and powerful tumor responses.
+
+Since this finding, some patients were given only ICB or both ICB and JAK inhibitors to test if JAK inhibitors actually improve tumor resistance problem. Clinical data and blood samples were obtain from 6 patients in our study across 6 different timepoints (every week for 6 weeks). Blood samples were processed to PBMC, stained with extracellular and intracellular protein markers, ran in both Flow Cytometry and CyTOF (using metal ions instead of fluorochromes) to assess immune profile. There are multiple parameters/variables in the diverse datasets that worth investigating. First of all, patient treatment has 2 types: ICB only versus both JAK inhibitors and ICB combination, allowing us to confirm main hypothesis whether IFN pathway inhibition improve ICB immunotherapy effects. Second of all, immune profile is measured in both Flow Cytometry and CyTOF, one method might have different or new insights that the other does not provide. Thirdly, having longitudinal samples from multiple patients is precious and rare so we can investigate immune response in short-term and in long-term, whether patient might have relapsed cancer. Last but not least, clinical data can be used to profile patients and determine if clinical data has correlation to patient’s immune profile.
+
+Methods and Results: 
+
+To analyze protein expression from Flow Cytometry, we first use MEM (Marker Enrichment Modeling) package developed by the Irish Lab of Vandebilt University.  
+```{r}
+# Load all libraries
+library(FlowSOM)
+library(flowCore)
+library(Biobase)
+library(gplots)
+library(ggplot2)
+library(hexbin)
+library(MEM)
+library(tidyverse)
+library(Rtsne)
+library(uwot)
+library(viridis)
+library(ggExtra)
+```
+
