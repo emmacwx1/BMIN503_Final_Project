@@ -36,3 +36,75 @@ library(viridis)
 library(ggExtra)
 ```
 
+Read flow data (.fcs files), assign MEM based on MEM function, generate heatmap on protein expression 
+
+```{r}
+# read FCS files into R
+setwd("C:/Users/Emma/Downloads/test2")
+getwd()
+
+test2 <-  dir(pattern = "*.fcs")
+
+read.flowSet(files=test2, path=".", pattern=NULL, phenoData, descriptions,name.keyword, alter.names=FALSE, transformation = "linearize", which.lines=NULL, column.pattern = NULL, invert.pattern = FALSE, decades=0, sep="\t", as.is=TRUE, name, ncdf=FALSE, dataset=NULL, min.limit=NULL, emptyValue=TRUE, ignore.text.offset = FALSE)
+
+#markers 
+#note: not a function itself outside MEM, could not run just with "markers"
+
+
+#to test what is are the markers in the current file
+
+# Run MEM on the manually gated populations (each FCS files is a pop) from paper
+MEM.values.orig = MEM(
+  file4,
+  transform = TRUE, 
+  #whether or not to apply asinh transformation to the data. default is FALSE
+  cofactor = 15,
+  #if transform is TRUE, what cofactor should be applied. default is 1. Arcsinh transformed value = arcsinh(raw value/cofactor)
+  choose.markers = FALSE, 
+  #TRUE=data contains markers that will NOT be used in the analysis (e.g. SSC or FSC channels in flow data)
+  #FALSE, either all markers in exp will be used in MEM or the user can pass a character string of the markers to be used in the analysis using the function call (markers) below
+  markers = "7:31",    
+  #all or column index 
+  choose.ref = FALSE,   
+  #default reference for each population is all other popultaions.any clusters you want to use as reference?? possible landmark pop if wanted 
+  zero.ref = FALSE,   
+  #TRUE=a zero, or synthetic negative, referece will be used for all populations. MAGref therefore is 0 and IQRref is the median IQR across all markers chosen. 
+  rename.markers = TRUE,   
+  #if false, either column names will not be changed or the user can pass a character string of the new column names using the function call (new.marker.names) below
+  new.marker.names = "CD45RA, CXCR5, PD1, IgG4, dump, CD8, CD127, Tox, Tim3, Eomes, TCF1, CD38, CCR7, CTLA-4, CD69, CD103, FoxP3, Ki67, CD27, CD4, CX3CR1, CD39, T-bet, CD28, CD3",
+  file.is.clust = TRUE,   
+  #TRUE=multiple files are entered, each file contains cells from only 1 cluster. 
+  #Divij sample is 1 cluster 1 file
+  #will merge data into one matrix for analysis and to add a file ID for each file that will stand in as the cluster ID (??cluster=file?) output=a text file indicating which file corresponds to which cluster number will be written to the output files folder 
+  add.fileID = FALSE,  
+  #multi files, but not 1 file = 1 cluster; instead, 1 file contains multiple cluster, and that there is already a cluster channel included as the last column in each file. 
+  ##QUESTION: what if 1 file does has multiple clusters, but there is no cluster channel included as the last column in each file? 
+  #if TRUE, a file ID will be appended to the cluster ID so user can ID the file as well as cluster from which each population came.  
+  IQR.thresh = NULL
+)
+
+# build MEM heatmap and output enrichment scores
+build.heatmaps(
+  MEM.values.orig,
+  cluster.MEM = "both",
+  display.thresh = 1,
+  newWindow.heatmaps = FALSE,
+  output.files = FALSE,
+  labels = TRUE,
+  only.MEMheatmap = FALSE
+)
+
+# prepare data for use in UMAP
+data <- lapply(lapply(files, read.FCS), exprs)
+ID <- c(1:length(data))
+combined.data = as.data.frame(do.call(rbind, mapply(
+  cbind, data, "File ID" = ID, SIMPLIFY = F
+)))
+combined.data$`File ID` <- as.numeric(combined.data$`File ID`)
+chosen.markers = combined.data[, c(7:10, 12:31)]
+transformed.chosen.markers <- chosen.markers %>%
+  mutate_all(function(x)
+    asinh(x / 15))
+overall_seed = 43
+```
+
