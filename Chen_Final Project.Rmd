@@ -35,6 +35,7 @@ library(Rtsne)
 library(uwot)
 library(viridis)
 library(ggExtra)
+library(premessa)
 ```
 
 
@@ -46,15 +47,21 @@ Step1: set working directory
 setwd("C:/Users/Emma/Documents/BMIN503_Final_Project")
 getwd()
 ```
+```{r}
+concat <-  dir(pattern="*.fcs")
+concatenate_fcs_files(concat, output.file = "C:/Users/Emma/Documents/BMIN503_Final_Project/concatnated.csv")
+
+concatenate_fcs_files(concat, output.file = "C:/Users/Emma/Documents/BMIN503_Final_Project/concatnated.fcs")
+```
 
 Step2: look at concatenated fcs file first to find out markers names. For this project, 1 file is 1 cluster with multiple patients' sample across multiple timepoints. 
 ```{r}
 #replace with fcs file name of dataset
 ##Read in concatenated FCS file ---- 
-concat <-  dir(pattern="*concat2_1.fcs")
+test <-  dir(pattern="concatnated.fcs")
 
 
-test.data = read.FCS(concat, transformation="linearize", which.lines=NULL,
+test.data = read.FCS(test, transformation="linearize", which.lines=NULL,
          alter.names=FALSE, column.pattern=NULL, invert.pattern = FALSE,
          decades=0, ncdf = FALSE, min.limit=NULL, 
          truncate_max_range = TRUE, dataset=NULL, emptyValue=TRUE, 
@@ -68,6 +75,86 @@ markernames(test.data)
 #There are 25 markers for later analysis: "CD45RA, CXCR5, PD1, IgG4, dump, CD8, CD127, Tox, Tim3, Eomes, TCF1, CD38, CCR7, CTLA-4, CD226, CD39, FoxP3, Ki67, CD27, CD4, CD73,TIGIT, T-bet, CD28, CD3"
 
 ```
+```{r}
+all.data = exprs(test.data)
+scaled.data = all.data[, c(7:31)]
+scaled.data = expr(scaled.data)
+original.clusters = all.data[, c(22)]
+original.tSNE = all.data[, c(23:24)]
+overall_seed = 46
+```
+
+```{r}
+# Run t-SNE on scaled markers
+set.seed(overall_seed)
+mytSNE = Rtsne(
+  scaled.data, #
+  dims = 2,
+  initial_dims = 8,
+  perplexity = 15,
+  check_duplicates = FALSE,
+  max_iter = 10000
+)
+tSNE.data = as.data.frame(mytSNE$Y)
+
+range <- apply(apply(tSNE.data, 2, range), 2, diff)
+graphical.ratio.t <- (range[1] / range[2])
+
+range <- apply(apply(tSNE.data, 2, range), 2, diff)
+graphical.ratio.t <- (range[1] / range[2])
+
+# t-SNE flat dot plot and density dot plot (each dot is a patient)
+tSNE.plot <- data.frame(x = tSNE.data[, c(1)], y = tSNE.data[, c(2)])
+
+ggplot(tSNE.plot) + coord_fixed(ratio = graphical.ratio.t) + 
+  geom_point(aes(x = x, y = y), cex = 1) + 
+  labs(x = "t-SNE 1", y = "t-SNE 2", title = "t-SNE on 1 patient's 8 timeponts data") + 
+  theme_bw() + 
+  labs(caption = "Data from Divij Mathew/Wherry Lab")
+
+```
+
+```{r}
+# Run FlowSOM on the t-SNE axes
+tSNE.data.mat <- as.matrix(tSNE.data)
+
+# create flowFrame
+metadata <-
+  data.frame(name = dimnames(tSNE.data.mat)[[2]],
+             desc = paste('t-SNE', dimnames(tSNE.data.mat)[[2]]))
+metadata$range <- apply(apply(tSNE.data.mat , 2, range), 2, diff)
+metadata$minRange <- apply(tSNE.data.mat , 2, min)
+metadata$maxRange <- apply(tSNE.data.mat , 2, max)
+tSNE.flowframe <- new("flowFrame",
+                      exprs = tSNE.data.mat ,
+                      parameters = AnnotatedDataFrame(metadata))
+
+# implement the FlowSOM on t-SNE data
+fSOM.t <-
+  FlowSOM(
+    tSNE.flowframe,
+    compensate = FALSE,
+    transform = FALSE,
+    toTransform = c(1:2),
+    scale = TRUE,
+    colsToUse = c(1:2),
+    xdim = 10,
+    ydim = 10,
+    nClus = 20,
+    seed = overall_seed
+  )
+tSNE.FlowSOM.clusters <-
+  as.matrix(fSOM.t[[2]][fSOM.t[[1]]$map$mapping[, 1]])
+
+# plot t-SNE with FlowSOM clusters
+ggplot(tSNE.plot) + coord_fixed(ratio = graphical.ratio.t) + 
+  geom_point(aes(x = x, y = y, color = tSNE.FlowSOM.clusters), cex = 1.5) + 
+  labs(x = "t-SNE 1", y = "t-SNE 2", title = "t-SNE on 1 patient's 8 timeponts data", 
+       color = "FlowSOM Cluster") + theme_bw() + 
+  guides(colour = guide_legend(override.aes = list(size=5))) +
+  labs(caption = "Data from Divij Mathew/Wherry Lab")
+```
+
 
 ```{r}
 ##Read in concatenated FCS file ---- 
@@ -96,6 +183,34 @@ fSOM <- FlowSOM(concat,
                 # Metaclustering options and set seed for reproducibility:
                 nClus = 20, 
                 seed = 42)
+str(fSOM, max.level = 2)
+
+
+set.seed(42)
+
+#fileName <- system.file("concat", package="FlowSOM")
+fSOM <- ReadInput(concat, compensate = FALSE, transform = TRUE,
+                    toTransform=c(7:31), scale = FALSE)
+ff <- suppressWarnings(flowCore::read.FCS(concat))
+fSOM <- ReadInput(ff, compensate = TRUE, transform = TRUE, scale = TRUE)
+
+fSOM <- BuildSOM(fSOM, colsToUse = c(12, 26))
+fSOM <- BuildMST(fSOM, tSNE=TRUE)
+cluster_labels <- GetClusters(fSOM)
+mfis <- GetMFIs(fSOM, colsUsed = 7:31, prettyColnames = TRUE)
+
+
+PlotStars(fSOM$FlowSOM, markers = fsom$map$colsUsed, view = "MST",
+colorPalette = grDevices::colorRampPalette(c("#00007F", "blue",
+"#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000")),
+starBg = "white", backgroundValues = NULL,
+backgroundColor = function(n) { grDevices::rainbow(n, alpha = 0.3)
+}, backgroundLim = NULL, backgroundBreaks = NULL,
+backgroundSize = NULL, thresholds = NULL, legend = TRUE,
+query = NULL, main = "")
+
+
+str(fSOM$map, max.level = 2)
 
 PlotStars(fSOM[[1]])
 PlotStars(fSOM$FlowSOM,backgroundValues = as.factor(fSOM$metaclustering))
@@ -103,8 +218,12 @@ PlotStars(fSOM$FlowSOM,backgroundValues = as.factor(fSOM$metaclustering))
 ## Output a csv file with the flowSOM cluster information ----
 # You will need to "un-concatenate" this file in Cytobank, FlowJo, or R
 flowSOM.clustering <- as.matrix(fSOM[[2]][fSOM[[1]]$map$mapping[,1]])
-write.csv(flowSOM.clustering, "C:/Users/Allie/Desktop/FCS files/2017/2017-10-13 FCS files for monocyte comparison/FCS files w tSNE for FlowSOM/RCC/RCC_concat.csv")
+write.csv(flowSOM.clustering, "C:/Users/Emma/Documents/BMIN503_Final_Project/clusters_concat.csv")
+#first column is cell event, second column in cluster ID
 
+```
+
+```{r}
 
 ```
 
