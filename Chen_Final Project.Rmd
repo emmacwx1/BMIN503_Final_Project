@@ -161,7 +161,7 @@ MEMdata = cbind(scaled.data, cluster)
 MEM.values.tf = MEM(
   MEMdata,
   transform = TRUE,
-  cofactor = 15,
+  cofactor = 150,
   choose.markers = FALSE,
   markers = "all",
   choose.ref = FALSE,
@@ -286,7 +286,7 @@ MEM.data = cbind(transformed.chosen.markers, cluster)
 MEM.values.uf = MEM(
   MEM.data,
   transform = FALSE,
-  cofactor = 15,
+  cofactor = 150,
   choose.markers = FALSE,
   markers = "all",
   choose.ref = FALSE,
