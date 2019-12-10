@@ -49,7 +49,7 @@ getwd()
 ```
 ```{r}
 concat <-  dir(pattern="*.fcs")
-concatenate_fcs_files(concat, output.file = "C:/Users/Emma/Documents/BMIN503_Final_Project/concatnated.csv")
+#concatenate_fcs_files(concat, output.file = "C:/Users/Emma/Documents/BMIN503_Final_Project/concatnated.csv")
 
 concatenate_fcs_files(concat, output.file = "C:/Users/Emma/Documents/BMIN503_Final_Project/concatnated.fcs")
 ```
@@ -75,12 +75,13 @@ markernames(test.data)
 #There are 25 markers for later analysis: "CD45RA, CXCR5, PD1, IgG4, dump, CD8, CD127, Tox, Tim3, Eomes, TCF1, CD38, CCR7, CTLA-4, CD226, CD39, FoxP3, Ki67, CD27, CD4, CD73,TIGIT, T-bet, CD28, CD3"
 
 ```
+
+
 ```{r}
 all.data = exprs(test.data)
 scaled.data = all.data[, c(7:31)]
-scaled.data = expr(scaled.data)
-original.clusters = all.data[, c(22)]
-original.tSNE = all.data[, c(23:24)]
+#original.clusters = all.data[, c(22)]
+#original.tSNE = all.data[, c(23:24)]
 overall_seed = 46
 ```
 
@@ -95,10 +96,7 @@ mytSNE = Rtsne(
   check_duplicates = FALSE,
   max_iter = 10000
 )
-tSNE.data = as.data.frame(mytSNE$Y)
-
-range <- apply(apply(tSNE.data, 2, range), 2, diff)
-graphical.ratio.t <- (range[1] / range[2])
+tSNE.data = as.data.frame(mytSNE$Y) #Matrix containing the new representations for the objects
 
 range <- apply(apply(tSNE.data, 2, range), 2, diff)
 graphical.ratio.t <- (range[1] / range[2])
@@ -113,6 +111,7 @@ ggplot(tSNE.plot) + coord_fixed(ratio = graphical.ratio.t) +
   labs(caption = "Data from Divij Mathew/Wherry Lab")
 
 ```
+
 
 ```{r}
 # Run FlowSOM on the t-SNE axes
@@ -149,10 +148,185 @@ tSNE.FlowSOM.clusters <-
 # plot t-SNE with FlowSOM clusters
 ggplot(tSNE.plot) + coord_fixed(ratio = graphical.ratio.t) + 
   geom_point(aes(x = x, y = y, color = tSNE.FlowSOM.clusters), cex = 1.5) + 
-  labs(x = "t-SNE 1", y = "t-SNE 2", title = "t-SNE on 1 patient's 8 timeponts data", 
+  labs(x = "t-SNE 1", y = "t-SNE 2", title = "FlowSOM Clustering on t-SNE Axes", 
        color = "FlowSOM Cluster") + theme_bw() + 
   guides(colour = guide_legend(override.aes = list(size=5))) +
   labs(caption = "Data from Divij Mathew/Wherry Lab")
+```
+```{r}
+# Run MEM on the FlowSOM clusters from t-SNE
+cluster = as.numeric(as.vector((tSNE.FlowSOM.clusters)))
+MEMdata = cbind(scaled.data, cluster)
+
+MEM.values.tf = MEM(
+  MEMdata,
+  transform = TRUE,
+  cofactor = 15,
+  choose.markers = FALSE,
+  markers = "all",
+  choose.ref = FALSE,
+  zero.ref = FALSE,
+  rename.markers = TRUE,
+  new.marker.names = "CD45RA, CXCR5, PD1, IgG4, dump, CD8, CD127, Tox, Tim3, Eomes, TCF1, CD38, CCR7, CTLA-4, CD226, CD39, FoxP3, Ki67, CD27, CD4, CD73,TIGIT, T-bet, CD28, CD3",
+  file.is.clust = FALSE,
+  add.fileID = FALSE,
+  IQR.thresh = NULL
+)
+
+
+# build MEM heatmap and output enrichment scores
+build.heatmaps(
+  MEM.values.tf,
+  cluster.MEM = "both",
+  cluster.medians = "none",
+  display.thresh = 1,
+  newWindow.heatmaps = FALSE,
+  output.files = TRUE,
+  labels = TRUE,
+  only.MEMheatmap = FALSE
+)
+```
+
+
+```{r}
+# prepare data for use in UMAP
+data <- lapply(lapply(test, read.FCS), exprs) #list apply to read FCS file (read.FCS) and to make it readable (exprs), return list for UMAP. apply takes in 3 arguments: 1 data matrix, 2 row/column operation, function to be applied 
+ID <- c(1:length(data)) #ID for each file as files are in object (data) now
+combined.data = as.data.frame(do.call(rbind, mapply(
+  cbind, data, "File ID" = ID, SIMPLIFY = F
+)))
+combined.data$`File ID` <- as.numeric(combined.data$`File ID`)
+chosen.markers = combined.data[, c(7:31)]
+transformed.chosen.markers <- chosen.markers %>%
+  mutate_all(function(x)
+    asinh(x / 15))
+overall_seed = 43 
+```
+
+
+
+```{r UMAP}
+# Run UMAP on all surface markers
+set.seed(overall_seed)
+myumap <-
+  umap(transformed.chosen.markers,
+       ret_model = TRUE,
+       n_threads = 1, 
+       verbose = TRUE)
+umap.data = as.data.frame(myumap$embedding)
+
+range <- apply(apply(umap.data, 2, range), 2, diff)
+graphical.ratio <- (range[1] / range[2])
+
+# UMAP flat dot plot and density dot plot
+UMAP.plot <- data.frame(x = umap.data[, 1], y = umap.data[, 2])
+
+ggplot(UMAP.plot) + coord_fixed(ratio = graphical.ratio) + 
+  geom_point(aes(x = x, y = y), cex = 1) + labs(x = "UMAP 1", y = "UMAP 2", 
+                                                title = "UMAP on 1 patient's 8 timepoints Data") + 
+  theme_bw() + 
+  labs(caption = "Data from Divij Mathew/Wherry Lab")
+
+ggplot(UMAP.plot, aes(x = x, y = y)) + coord_fixed(ratio = graphical.ratio)  + 
+  geom_bin2d(bins = 128) +
+  scale_fill_viridis_c(option = "A", trans = "sqrt") + 
+  scale_x_continuous(expand = c(0.1, 0)) +
+  scale_y_continuous(expand = c(0.1, 0)) + labs(x = "UMAP 1", y = "UMAP 2", 
+                                                title = "UMAP on 1 patient's 8 timepoints Data") + 
+  theme_bw() + 
+  labs(caption = "Data from Divij Mathew/Wherry Lab")
+```
+
+
+```{r FlowSOM on UMAP}
+# Run FlowSOM on the UMAP axes
+umap.matrix <- as.matrix(umap.data)
+
+# create flowFrame
+UMAP.metadata <-
+  data.frame(name = dimnames(umap.matrix)[[2]],
+             desc = paste('UMAP', dimnames(umap.matrix)[[2]]))
+UMAP.metadata$range <- apply(apply(umap.matrix, 2, range), 2, diff)
+UMAP.metadata$minRange <- apply(umap.matrix, 2, min)
+UMAP.metadata$maxRange <- apply(umap.matrix, 2, max)
+umap.flowframe <- new("flowFrame",
+                      exprs = umap.matrix,
+                      parameters = AnnotatedDataFrame(UMAP.metadata))
+
+# implement the FlowSOM on the data
+fsom <-
+  FlowSOM(
+    umap.flowframe,
+    compensate = FALSE,
+    transform = FALSE,
+    toTransform = c(1:2),
+    scale = TRUE,
+    colsToUse = c(1:2),
+    nClus = 20, #change this
+    seed = overall_seed
+  )
+FlowSOM.clusters <-
+  as.matrix(fsom[[2]][fsom[[1]]$map$mapping[, 1]])
+
+# plot FlowSOM clusters on UMAP axes
+ggplot(UMAP.plot) + coord_fixed(ratio=graphical.ratio) + 
+  geom_point(aes(x=x, y=y, color=FlowSOM.clusters),cex = 1.5) + 
+  labs(x = "UMAP 1", y = "UMAP 2",title = "FlowSOM Clustering on UMAP Axes", 
+       color = "FlowSOM Cluster") + theme_bw() + 
+  guides(colour = guide_legend(override.aes = list(size=5)))+
+  labs(caption = "Data from Divij Mathew/Wherry Lab")
+```
+
+
+```{r MEM on UMAP/FlowSOM Clusters}
+# Run MEM on the FlowSOM clusters from UMAP
+cluster = as.numeric(as.vector((FlowSOM.clusters))) #clusters from UMAP and FlowSOM clustering
+MEM.data = cbind(transformed.chosen.markers, cluster)
+
+MEM.values.uf = MEM(
+  MEM.data,
+  transform = FALSE,
+  cofactor = 15,
+  choose.markers = FALSE,
+  markers = "all",
+  choose.ref = FALSE,
+  zero.ref = FALSE,
+  rename.markers = FALSE,
+  new.marker.names = "CD45RA, CXCR5, PD1, IgG4, dump, CD8, CD127, Tox, Tim3, Eomes, TCF1, CD38, CCR7, CTLA-4, CD226, CD39, FoxP3, Ki67, CD27, CD4, CD73,TIGIT, T-bet, CD28, CD3",
+  file.is.clust = FALSE,
+  add.fileID = FALSE,
+  IQR.thresh = NULL
+)
+
+# build MEM heatmap and output enrichment scores
+build.heatmaps(
+  MEM.values.uf,
+  cluster.MEM = "both",
+  cluster.medians = "none",
+  display.thresh = 1,
+  newWindow.heatmaps = FALSE,
+  output.files = TRUE,
+  labels = TRUE,
+  only.MEMheatmap = FALSE
+)
+```
+
+
+```{r RMSD for All Clusters}
+# RMSD to compare labels from all populations, cluster from TF vs clusters
+tf.MEM.scores = as.data.frame(MEM.values.tf[[5]])
+rownames(tf.MEM.scores) = paste0(rownames(tf.MEM.scores), ' (TF)')
+uf.MEM.scores = as.data.frame(MEM.values.uf[[5]])
+rownames(uf.MEM.scores) = paste0(rownames(uf.MEM.scores), ' (UMAP)')
+all.MEM.values = as.matrix(rbind(uf.MEM.scores, tf.MEM.scores))
+
+RMSD_vals <-
+  MEM_RMSD(
+    all.MEM.values,
+    format = NULL,
+    newWindow.heatmaps = FALSE,
+    output.matrix = FALSE
+  )
 ```
 
 
@@ -220,10 +394,6 @@ PlotStars(fSOM$FlowSOM,backgroundValues = as.factor(fSOM$metaclustering))
 flowSOM.clustering <- as.matrix(fSOM[[2]][fSOM[[1]]$map$mapping[,1]])
 write.csv(flowSOM.clustering, "C:/Users/Emma/Documents/BMIN503_Final_Project/clusters_concat.csv")
 #first column is cell event, second column in cluster ID
-
-```
-
-```{r}
 
 ```
 
