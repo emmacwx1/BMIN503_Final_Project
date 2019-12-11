@@ -2,7 +2,9 @@
 title: "Chen_Final Project"
 author: "Emma Chen"
 date: "11/21/2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -330,7 +332,7 @@ RMSD_vals <-
 ```
 
 
-```{r}
+```{r eval = FALSE}
 ##Read in concatenated FCS file ---- 
 concat <-  dir(pattern="*.fcs")
 
@@ -398,7 +400,7 @@ write.csv(flowSOM.clustering, "C:/Users/Emma/Documents/BMIN503_Final_Project/clu
 ```
 
 
-```{r}
+```{r eval = FALSE}
 #get all .fcs file in dataset
 analysis <-  dir(pattern = "*.fcs")
 
@@ -466,7 +468,7 @@ overall_seed = 43
 ```
 
 
-```{r UMAP}
+```{r UMAP eval = FALSE}
 # Run UMAP on all surface markers
 set.seed(overall_seed)
 myumap <-
@@ -499,7 +501,7 @@ ggplot(UMAP.plot, aes(x = x, y = y)) + coord_fixed(ratio = graphical.ratio)  +
 ```
 
 
-```{r FlowSOM on UMAP}
+```{r FlowSOM on UMAP  eval = FALSE}
 # Run FlowSOM on the UMAP axes
 umap.matrix <- as.matrix(umap.data)
 
@@ -538,7 +540,7 @@ ggplot(UMAP.plot) + coord_fixed(ratio=graphical.ratio) +
   labs(caption = "Data from Diggins et al., Nat Methods 2017, 14: 275-278 \nFlow Repository: FR-FCM-ZY63")
 ```
 
-```{r MEM on UMAP/FlowSOM Clusters}
+```{r MEM on UMAP/FlowSOM Clusters  eval = FALSE}
 # Run MEM on the FlowSOM clusters from UMAP
 cluster = as.numeric(as.vector((FlowSOM.clusters)))
 MEM.data = cbind(transformed.chosen.markers, cluster)
@@ -572,7 +574,7 @@ build.heatmaps(
 ```
 
 
-```{r RMSD for All Clusters}
+```{r RMSD for All Clusters eval = FALSE}
 # RMSD to compare labels from all populations
 orig.MEM.scores = as.data.frame(MEM.values.orig[[5]])
 rownames(orig.MEM.scores) = paste0(rownames(orig.MEM.scores), " (Fig.1)")
