@@ -1,8 +1,0 @@
-"1" "export_export3_Exhastion_1A_028.fcs"
-"2" "export_export3_Exhastion_2A_029.fcs"
-"3" "export_export3_Exhastion_3A_030.fcs"
-"4" "export_export3_Exhastion_4A_031.fcs"
-"5" "export_export3_Exhastion_5A_032.fcs"
-"6" "export_export3_Exhastion_6A_033.fcs"
-"7" "export_export3_Exhastion_7A_034.fcs"
-"8" "export_export3_Exhastion_8A_035.fcs"
