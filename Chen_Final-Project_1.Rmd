@@ -356,7 +356,7 @@ There are a few limitations of viSNE:
 	it might lose large-scale info, the inter-cluster relationship, 
 	this could be a problem when we are analyzing genomic data, 
 	it does not scale really well for rapidly increasing sample sizes in scRNA seq.
-2-and it takes a longer time to compute
+2-and it takes a longer time to compute (my project's viSNE took more than 15mins to run on 8000 events, UMAP took less than 1min, with start and end timestamp)
 
 On the other hand, UMAP has a faster runtime, data consistency and more meaningful organization of cell clusters
 That does not mean viSNE is inferior to UMAP. To use which data visualization methods, PCA, viSNE, UMAP or others, depends on what questions we are trying to answer, the dataset size, variability.  

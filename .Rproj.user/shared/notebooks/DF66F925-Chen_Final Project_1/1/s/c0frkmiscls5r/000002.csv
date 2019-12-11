@@ -1,0 +1,2 @@
+"0","concat <-  dir(pattern=""*.fcs"")"
+"0","concatenate_fcs_files(concat, output.file = ""C:/Users/Emma/Documents/BMIN503_Final_Project/concatnated.fcs"")"
