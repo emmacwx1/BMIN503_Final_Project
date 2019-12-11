@@ -13,4 +13,6 @@ There are 4 objectives in total.
 
 First two objectives are completed as described in HTML file. Aim to compared the third one. Last objective will need to do on lab computer because of data amount. 
 
+Main packages used: Rtsne flowSOM, flowCORE, MEM
+
 
