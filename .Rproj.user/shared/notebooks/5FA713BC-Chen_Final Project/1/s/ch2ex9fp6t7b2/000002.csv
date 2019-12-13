@@ -1,6 +1,0 @@
-"0","# prepare data for use in UMAP
-data <- lapply(lapply(test.data, read.FCS), exprs) #list apply to read FCS file (read.FCS) and to make it readable (exprs), return list for UMAP. apply takes in 3 arguments: 1 data matrix, 2 row/column operation, function to be applied 
-"
-"2","Error in as.list.default(X) : 
-  no method for coercing this S4 class to a vector
-"

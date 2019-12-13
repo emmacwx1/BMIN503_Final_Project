@@ -1,5 +1,0 @@
-"0","all.data = exprs(test.data)"
-"0","scaled.data = all.data[, c(7:31)]"
-"0","#original.clusters = all.data[, c(22)]"
-"0","#original.tSNE = all.data[, c(23:24)]"
-"0","overall_seed = 46"

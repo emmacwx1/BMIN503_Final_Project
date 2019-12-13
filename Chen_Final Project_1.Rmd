@@ -12,10 +12,10 @@ knitr::opts_chunk$set(root.dir = 'C:/Users/Emma/Documents/BMIN503_Final_Project'
 getwd()
 ```
 
-Overview:
+### Overview
 My project study whether administration of both JAK inhibitors and immune checkpoint blockade therapy (anti-PD1) improves tumor resistance so patients will response to immunotherapy better, improve survival and have more powerful tumor response. My dataset included Flow Cytometry and CyTOF of 1 of 7 patients’ PBMC blood sample across 8 timepoints (because of the computing power of computer, I was not able to analyze across multiple patient data.
 
-Introduction:
+### Introduction 
 My project is to investigate whether combined administration of JAK inhibitor and immune checkpoint blockade (ICB)–anti-PD1 immunotherapy is better than with only ICB over time. Currently, ICB, either anti-PD1 or anti-CTLA4, is used to treat cancer patients. ICB functions as taking the brake off immune system’s response to cancer. However, many patients treated with ICB relapsed or their cancer progresses, leading to the idea that taking one break off is not enough, multiple brakes needs to be released. Dr. Minn at Penn Medicine found out that interferon (IFN) pathway is critical to tumor’s resistance to immunotherapy, which also means shutting down the IFN pathway may improve the response to ICB. He found out that Janus kinase (JAK) inhibitor could overcome the resistance to immunotherapy, improving survival and powerful tumor responses.
 
 Since this finding, some patients were given only ICB or both ICB and JAK inhibitors to test if JAK inhibitors actually improve tumor resistance problem. Clinical data and blood samples were obtain from 7 patients in our study across 8 different timepoints (one treatment cycle every 3 weeks). Blood samples were processed to PBMC, stained with 25 extracellular and intracellular protein markers in total, ran in both Flow Cytometry and CyTOF (using metal ions instead of fluorochromes) to assess immune profile. There are multiple parameters/variables in the diverse datasets that worth investigating.
@@ -27,8 +27,7 @@ There are 4 objectives in total.
 
 Last but not least, clinical data can be used to profile patients and determine if clinical data has correlation to patient’s immune profile.
 
-Methods and Results:
-
+### Methods
 Data analysis workflow for cytometry data have a few steps:
 -concatenate multiple files into one file (which files to concatenate depends on study questions). In my project, I concatenate all 8 timepoints' .fcs files of 1 patient together (will indicate below).
 -input .fcs files into readable format in R, such as matrixs.
@@ -38,6 +37,7 @@ Data analysis workflow for cytometry data have a few steps:
 -use MEM package (Marker Enrichment Modeling, developed by the Irish Lab of Vanderbilt University) to do immune profiling and dig deeper into cluster features 
 
 
+### Results
 Step 0.1: run libraries needed for analysis
 ```{r}
 library(FlowSOM)
@@ -95,6 +95,7 @@ scaled.data = all.data[, c(7:31)]
 overall_seed = 46
 ```
 
+
 Step 3.2a Run t-SNE on markers of interest, reduce dimension
 ```{r}
 set.seed(overall_seed)
@@ -124,6 +125,10 @@ ggplot(tSNE.plot) + coord_fixed(ratio = graphical.ratio.t) +
   labs(caption = "Data from Divij Mathew/Wherry Lab")
 
 ```
+
+note: 1 file with 8000 events, size 1.5Mb, took around 10mins to run 
+(will compare to UMAP later)
+
 
 Step 4: cluster tSNE plot with flowSOM, color code clusters. clusters = 20 based on previous manual gating.
 ```{r}
@@ -185,7 +190,8 @@ MEM.values.tf = MEM(
   new.marker.names = "CD45RA, CXCR5, PD1, IgG4, dump, CD8, CD127, Tox, Tim3, Eomes, TCF1, CD38, CCR7, CTLA-4, CD226, CD39, FoxP3, Ki67, CD27, CD4, CD73,TIGIT, T-bet, CD28, CD3",
   file.is.clust = FALSE,
   add.fileID = FALSE,
-  IQR.thresh = NULL
+  IQR.thresh = NULL,
+  output.prescaled.MEM = TRUE
 )
 
 
@@ -220,6 +226,7 @@ transformed.chosen.markers <- chosen.markers %>%
 overall_seed = 43 
 ```
 
+
 ```{r UMAP}
 # Run UMAP on all surface markers
 set.seed(overall_seed)
@@ -251,6 +258,9 @@ ggplot(UMAP.plot, aes(x = x, y = y)) + coord_fixed(ratio = graphical.ratio)  +
   theme_bw() + 
   labs(caption = "Data from Divij Mathew/Wherry Lab")
 ```
+Note: same file with 8000 events, size 1.5Mb took 1mins to run a UMAP map.UMAP has timestamp 
+One advantage of UMAP over tSNE as a dimension reduction tool is that UMAP has shorter run time. 
+
 
 
 Step 4: cluster UMAP plot with flowSOM, color code clusters. clusters = 20 based on previous manual gating.
@@ -292,6 +302,9 @@ ggplot(UMAP.plot) + coord_fixed(ratio=graphical.ratio) +
   guides(colour = guide_legend(override.aes = list(size=5)))+
   labs(caption = "Data from Divij Mathew/Wherry Lab")
 ```
+Note: 
+comparing this dimension reduction graph from UMAP, we can see more distinct clusters than tSNE's.
+Another advantage of UMAP over tSNE is that it can show inter-cluster relation better, which is very important if dataset size increases. 
 
 step 5: immune profile each cluster with MEM. MEM is good at look at markers that do NOT have a big variation across cells.
 ```{r MEM on UMAP/FlowSOM Clusters}
@@ -311,7 +324,8 @@ MEM.values.uf = MEM(
   new.marker.names = "CD45RA, CXCR5, PD1, IgG4, dump, CD8, CD127, Tox, Tim3, Eomes, TCF1, CD38, CCR7, CTLA-4, CD226, CD39, FoxP3, Ki67, CD27, CD4, CD73,TIGIT, T-bet, CD28, CD3",
   file.is.clust = FALSE,
   add.fileID = FALSE,
-  IQR.thresh = NULL
+  IQR.thresh = NULL, 
+  output.prescaled.MEM = TRUE
 )
 
 # build MEM heatmap and output enrichment scores
@@ -327,9 +341,9 @@ build.heatmaps(
 )
 ```
 
-RMSD calculate pair-wise cluster relationship. It determines which markers the population share in common and then calculates the percent maximum RMSD between the two populations
+RMSD calculate pair-wise cluster relationship. It determines which markers the population share in common and then calculates the percent maximum RMSD between the two populations. the more red means the two clusters are more similar. With this pair-wise comparison for different population, we can then look into the two cluster that are similar, from UMAP and from tSNE, look at their immune profile. 
 
-for next direction, can used to compare clusters from different timepoints of the same patients, and between patients. the more red means the clusters have more enrichment MEM scores in common. 
+future directions: compare clusters from different timepoints of the same patients, and between patients. the more red means the clusters have more enrichment MEM scores in common. 
 ```{r RMSD for All Clusters}
 # RMSD to compare labels from all populations, cluster from TF vs clusters
 tf.MEM.scores = as.data.frame(MEM.values.tf[[5]])
@@ -347,8 +361,78 @@ RMSD_vals <-
   )
 ```
 
-Discussion: 
+Now we have 20 clusters from either tSNE+flowSOM's MEM, or from UMAP+flowSOME's MEM, then we can look at how these clusters express different proteins using machine learning. 
 
+1st: PCA
+
+Cleaning data. Import from txt generate from MEM in the output files' folder. Add a column containing clusterIDs (1-20) for our reference and analysis.
+
+first we can look at tSNE+flowSOM+MEM clusters
+```{r}
+library(ggbiplot)
+
+t <- read.table(file = "C:/Users/Emma/Documents/BMIN503_Final_Project/output files/2019-12-13_161409 Pre-scaled MEM matrix.txt", #Name of file
+                header = TRUE, #Does the file have a header (names of columns)?
+                sep = "\t", #Character that separates  column entries (tab, space, comma)
+                skip = 0, #Number of lines to skip from beginning
+                as.is = TRUE, #Should character variables be left alone 
+                na.strings = NA, #The encoding of missing values. Blanks are assumed missing too.
+                comment.char = "#", #Lines of file beginning with this character are ignored. (# default)
+                quote = "", #Character used to quote values. "" is no quotes.
+                nrows = -1 #The number of rows to read in. Negative/invalid values are ignored
+)
+
+cluster <- unlist(rownames(t))
+t <- t %>%
+  mutate(clusterID = cluster)
+```
+
+PCA analysis of 20 clusters from UMAP+flowSOM' MEM. 
+```{r}
+tMEM.pca <- prcomp(t[, 1:25], scale = TRUE)
+summary(tMEM.pca)
+
+ggbiplot(tMEM.pca, groups = t$clusterID, circle = TRUE) +
+  scale_color_discrete(name = '') +
+  theme(legend.direction = 'horizontal', legend.position = 'top')
+
+ggscreeplot(tMEM.pca)
+```
+
+Next look at UMAP+flowSOM+MEM clusters.
+```{r}
+u <- read.table(file = "C:/Users/Emma/Documents/BMIN503_Final_Project/output files/2019-12-13_161441 Pre-scaled MEM matrix.txt", #Name of file
+                header = TRUE, #Does the file have a header (names of columns)?
+                sep = "\t", #Character that separates  column entries (tab, space, comma)
+                skip = 0, #Number of lines to skip from beginning
+                as.is = TRUE, #Should character variables be left alone 
+                na.strings = NA, #The encoding of missing values. Blanks are assumed missing too.
+                comment.char = "#", #Lines of file beginning with this character are ignored. (# default)
+                quote = "", #Character used to quote values. "" is no quotes.
+                nrows = -1 #The number of rows to read in. Negative/invalid values are ignored
+)
+
+cluster2 <- unlist(rownames(u))
+u <- u %>%
+  mutate(clusterID = cluster2)
+```
+
+PCA analysis of 20 clusters from UMAP+flowSOM' MEM. 
+```{r}
+uMEM.pca <- prcomp(u[, 1:25], scale = TRUE)
+summary(uMEM.pca)
+
+ggbiplot(uMEM.pca, groups = u$clusterID, circle = TRUE) +
+  scale_color_discrete(name = '') +
+  theme(legend.direction = 'horizontal', legend.position = 'top')
+
+ggscreeplot(uMEM.pca)
+```
+Notes: comparing PCA of UMAP and tSNE clusters, cluster's immune profiles and distribution is quite different. 
+
+
+
+###Discussion: 
 The two previous methods use viSNE and UMAP to reduce dataset dimension. 
 
 There are a few limitations of viSNE: 
@@ -366,12 +450,13 @@ As for designing cytometry workflow, R is capable to do concatenation, gating ba
 But initial gating should better be done for cells of interest. 
 
 Completed tasks are: 
-Alternative and potentially more efficient way to analyze cytometry data (Flow & CyTOF)
-Create workflow for analyzing longitudinal study data 
-Evaluated dimension reduction tool/packages
--Depends on study goals, data variation, dataset size, etc.  
+1)Alternative and potentially more efficient way to analyze cytometry data (Flow & CyTOF)
+2)Create workflow for analyzing longitudinal study data 
+3)Evaluated dimension reduction tool/packages
+-Depends on study goals, data variation, dataset size, etc.
+4)look at 20 clusters' protein expression with PCA 
 
-Future directions: 
+###Future directions: 
 1-Immune profile changes with combined therapy vs only ICB
   -Differentiate each timepoint from concatenated file
   -Investigate how cluster changes according to timepoints

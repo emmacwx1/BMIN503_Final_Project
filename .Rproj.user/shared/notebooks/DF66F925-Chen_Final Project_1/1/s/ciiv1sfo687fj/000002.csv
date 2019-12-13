@@ -5,81 +5,13 @@
 "0","       ret_model = TRUE,"
 "0","       n_threads = 1, "
 "0","       verbose = TRUE)"
-"2","20:26:38 UMAP embedding parameters a = 1.896 b = 0.8006
+"2","16:10:30 UMAP embedding parameters a = 1.896 b = 0.8006
 "
-"2","20:26:38 Read 8000 rows and found 25 numeric columns
+"2","16:10:30 Read 8000 rows and found 25 numeric columns
 "
-"2","20:26:38 Using Annoy for neighbor search, n_neighbors = 15
+"2","16:10:30 Using Annoy for neighbor search, n_neighbors = 15
 "
-"2","20:26:40 Building Annoy index with metric = euclidean, n_trees = 50
-"
-"2","0%   10   20   30   40   50   60   70   80   90   100%
-"
-"2","[----|----|----|----|----|----|----|----|----|----|
-"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","*"
-"2","|
-"
-"2","20:26:43 Writing NN index file to temp file C:\Users\Emma\AppData\Local\Temp\Rtmps96Iwu\file25903c8b52ce
-"
-"2","20:26:43 Searching Annoy index using 1 thread, search_k = 1500
-"
-"2","20:26:47 Annoy recall = 100%
-"
-"2","20:26:48 Commencing smooth kNN distance calibration using 1 thread
-"
-"2","20:26:49 Initializing from normalized Laplacian + noise
-"
-"2","20:26:50 Commencing optimization for 500 epochs, with 168348 positive edges
+"2","16:10:31 Building Annoy index with metric = euclidean, n_trees = 50
 "
 "2","0%   10   20   30   40   50   60   70   80   90   100%
 "
@@ -137,7 +69,75 @@
 "2","*"
 "2","|
 "
-"2","20:27:20 Optimization finished
+"2","16:10:34 Writing NN index file to temp file C:\Users\Emma\AppData\Local\Temp\Rtmpu2sUtX\file32501b371e6
+"
+"2","16:10:34 Searching Annoy index using 1 thread, search_k = 1500
+"
+"2","16:10:37 Annoy recall = 100%
+"
+"2","16:10:38 Commencing smooth kNN distance calibration using 1 thread
+"
+"2","16:10:39 Initializing from normalized Laplacian + noise
+"
+"2","16:10:39 Commencing optimization for 500 epochs, with 168348 positive edges
+"
+"2","0%   10   20   30   40   50   60   70   80   90   100%
+"
+"2","[----|----|----|----|----|----|----|----|----|----|
+"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","*"
+"2","|
+"
+"2","16:11:08 Optimization finished
 "
 "0","umap.data = as.data.frame(myumap$embedding)"
 "0",""
