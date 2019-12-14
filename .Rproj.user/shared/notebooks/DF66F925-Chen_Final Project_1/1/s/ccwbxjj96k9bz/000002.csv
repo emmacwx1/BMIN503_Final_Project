@@ -1,0 +1,3 @@
+"0","#c2:"
+"0","ggplot(data = c2, aes(x = TIGIT, y = CD226 )) +"
+"0","    geom_point(color = ""yellow"")"

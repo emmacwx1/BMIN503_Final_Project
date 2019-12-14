@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1574387774457.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3953183361",
+    "id" : "59E78EAC",
+    "lastKnownWriteTime" : 1576296894,
+    "last_content_update" : 1576296894822,
+    "path" : "~/BMIN503_Final_Project/Chen_Final Project_1.Rmd",
+    "project_path" : "Chen_Final Project_1.Rmd",
+    "properties" : {
+        "cursorPosition" : "16,4",
+        "last_setup_crc32" : "9555F115b4a414e7",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

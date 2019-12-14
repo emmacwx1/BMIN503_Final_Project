@@ -1,0 +1,143 @@
+---
+title: "Practicum 17: Gene Expression Microarrays"
+author: "Data Science for Biomedical Informatics (BMIN503/EPID600)"
+output:
+  html_document:
+    toc: false 
+    depth: 3 
+    theme: paper 
+    highlight: tango
+---
+
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+``` 
+
+***
+New packages to install for this practicum:
+```{r, eval = FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install()
+BiocManager::install(c("GEOquery", "oligo", "limma", "hgu133plus2.db", "pd.hg.u133.plus.2", "viridis"))
+install.packages("gplots")
+```
+***
+
+We will use GEO dataset [GSE8823](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE8823) to learn some basics about expression microarray analysis. Note that you could use [GEO2R](http://www.ncbi.nlm.nih.gov/geo/geo2r/?acc=GSE8823) to perform some of the analysis via a web interface that runs R on the back-end. If you are considering a more detailed gene expression microarray analysis, take a look at [raved](https://github.com/HimesGroup/raved). The GSE8823_RAW.tar file can be directly downloaded from [here](https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE8823&format=file), if the getGEOSuppFiles command below does not work for you. Make sure you put the file in a path that matches the one below (or change the path to match where your file is located) so that the commands will run properly.
+
+Follow the study link and notice where some of the information we will use comes from:
+
+* Study design
+* Platform used
+* Paper associated with the GEO entry
+
+
+Let's load the necessary libraries and get the raw expression (CEL) files to begin. Next, we'll add some basic phenotype information that was learned from looking through the GEO entry.
+```{r eval = FALSE}
+library(GEOquery)
+getGEOSuppFiles("GSE8823")
+untar("./GSE8823/GSE8823_RAW.tar", exdir = "./GSE8823/data")
+```
+
+```{r eval = TRUE}
+library(oligo)
+library(limma)
+library(viridis)
+
+celFiles <- list.celfiles("./GSE8823/data", full.names = TRUE, listGzipped = TRUE)
+raw.data <- read.celfiles(celFiles)
+pData(raw.data)
+pData(raw.data)$status <- c(rep("nonsmoker", 11), rep("smoker", 13))
+pData(raw.data)
+```
+
+The first thing we will look at are the raw probe intensity distributions for each sample by displaying them as boxplots. Next, we will use Robust Multi-array Average (RMA), to normalize and transform the intensities to a comparable scale. Looking at the raw expression, notice that the intensities for each sample vary widely. This does not reflect the biological variation we are interested in, which is why a function like RMA is used.
+```{r, eval = TRUE}
+boxplot(raw.data, col = "red", main = "Raw Probe Intensities")
+GSE8823.rma <- rma(raw.data)
+boxplot(GSE8823.rma, col = "blue", main = "RMA Expression Values")
+```
+A more comprehensive QC report could be obtained using `arrayQualityMetrics` or [raved](https://github.com/HimesGroup/raved). Selecting which samples to exclude from analysis is done after looking at quantitative and objective data, but is a bit of an art. First, we will drop a sample based on its raw boxplot. Then, to perform differential expression analysis, we will use `limma`. First, we create a design model matrix and specify which groups we would like to contrast.
+```{r eval = TRUE}
+GSE8823.qc <- raw.data[ , !sampleNames(raw.data) %in% "GSM219255.CEL.gz"]
+GSE8823.qc.rma <- rma(GSE8823.qc)
+design <- model.matrix(~ -1 + factor(GSE8823.qc.rma$status))
+colnames(design) <- levels(factor(GSE8823.qc.rma$status))
+design
+
+#Fit a linear model with limma package. Expression data linked to outcome of a design matrix model
+fit <- lmFit(GSE8823.qc.rma, design)
+#Create contrast groups of interest
+GSE8823.contrast <- makeContrasts(smoking = smoker - nonsmoker, 
+                                  levels = design)
+#Get the contrasts for samples of interest
+fit2 <- contrasts.fit(fit, GSE8823.contrast)
+#Adjust fit coefficients using an empirical Bayes moderation of standard errors
+fit2 <- eBayes(fit2)
+
+#Results for each hypothesis test can be extracted using
+smoking_results <- topTable(fit2, coef = "smoking", adjust = "BH", num = 200)
+head(smoking_results)
+```
+
+The row names are probes, but it would be nice to have official gene symbols. If you have a long list of results, this look-up can be time consuming.
+```{r eval = TRUE}
+library(hgu133plus2.db)
+smoking_results$ID = row.names(smoking_results)
+smoking_results$SYMBOL <- lapply(smoking_results$ID, function(x) mget(x, env = hgu133plus2SYMBOL, ifnotfound = NA)[[1]])
+head(smoking_results)
+```
+
+A common way to summarize overall expression results is to create a volcano plot. Boxplots of top-ranked probes help assess significance of expression across conditions for single probes, while heatmaps of the top-ranked results are commonly used to summarize results for groups of genes. First, we will generate a volcano plot using ggplot2.
+
+```{r eval = TRUE}
+library(ggplot2)
+# Output all differential expression results
+full_res <- topTable(fit2, coef = "smoking" , adjust = "BH", num = Inf)
+# Assign (in)significant genes
+full_res$sig <- rep("insignificant", nrow(full_res))
+full_res$sig[which(full_res$adj.P.Val<0.05)] <- "significant"
+ggplot(full_res, aes(x = logFC, y = -log10(adj.P.Val), color = sig)) + 
+  geom_point() +
+  theme_bw() +
+  ggtitle("Volcano plot") +
+  xlab("LogFC")+
+  ylab("-Log10(q-value)") +
+  scale_color_manual(values = c("black","red")) +
+  theme(legend.position = "none")
+# A volcano plot could also be generated using a built-in limma function:
+# volcanoplot(fit2, coef = "smoking", highlight = 10)
+```
+
+Next, let's create a boxplot for a top-ranked probe
+```{r eval = TRUE}
+# make a data frame for gene expression of the probe
+df_boxplot = data.frame(
+  expression = exprs(GSE8823.qc.rma)["1556180_at", ],
+  status = GSE8823.qc.rma$status)
+
+ggplot(df_boxplot, aes(x = status, y = expression)) +
+  geom_boxplot(outlier.colour = NA, color = "grey18", fill = "lightgreen") +
+  stat_boxplot(geom = "errorbar", color = "grey18") +
+  geom_jitter(size = 1, position = position_jitter(width = 0.3)) +
+  ggtitle("Expression Values for Probe 1556180_at") +
+  xlab(" ") +
+  ylab("RMA Intensity") +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+Finally, generate a heatmap for the top 200 probes using gplots. A dendrogram of smoking status is added at the top to get a sense of how well this group of probes is able to distinguish between smokers and non-smokers.
+```{r eval = TRUE, fig.width = 12, fig.height = 10}
+library(gplots)
+top.eset <- GSE8823.qc.rma[row.names(exprs(GSE8823.qc.rma)) %in% row.names(smoking_results)]
+status.colors <- unlist(lapply(GSE8823.qc.rma$status, function(x){if (x == "smoker") "navy" else "red"}))
+heatmap.2(exprs(top.eset), col = viridis(256, option = "B"),
+          trace = "none", keysize = 1.5, key.title = NA,
+          ColSideColors = status.colors)
+legend("topright", legend = c("Smoker", "Nonsmoker"), fill = c("red", "navy")) 
+```
+
+
+

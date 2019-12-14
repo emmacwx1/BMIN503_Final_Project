@@ -1,0 +1,68 @@
+---
+title: "final project scRNA"
+output: html_document
+author: "Emily Johnson" 
+  html_document:
+    toc: false 
+    depth: 3 
+    theme: paper 
+    highlight: tango
+---
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 400)
+```  
+
+## Libraries
+``` {r eval = TRUE}
+library(dplyr)
+library(Seurat)
+library(edgeR)
+library(limma)
+library(Glimma)
+library(gplots)
+library(org.Mm.eg.db)
+library(RColorBrewer)
+```
+
+## Reading in data 
+
+```{r eval = TRUE} 
+ips <- read.delim("GSE76381_iPSMoleculeCounts.cef.txt", stringsAsFactors = FALSE)
+embryo <- read.delim("GSE76381_EmbryoMoleculeCounts.cef.txt", stringsAsFactors = FALSE)
+es<- read.delim("GSE76381_ESMoleculeCounts.cef.txt", stringsAsFactors = FALSE)
+mouse.adult.da <- read.delim("GSE76381_MouseAdultDAMoleculeCounts.cef.txt", stringsAsFactors = FALSE)
+mouse.embryo <- read.delim("GSE76381_MouseEmbryoMoleculeCounts.cef.txt", stringsAsFactors = FALSE)
+
+ips.seurat <- CreateSeuratObject(counts = ips, project = "BMIN", min.cells = 0, min.features = 0)
+embryo.seurat <- CreateSeuratObject(counts = embryo, project = "BMIN", min.cells = 0, min.features = 0)
+es.seurat <- CreateSeuratObject(counts = es, project = "BMIN", min.cells = 0, min.features = 0)
+mouse.adult.da.seurat <- CreateSeuratObject(counts = mouse.adult.da, project = "BMIN", min.cells = 0, min.features = 0)
+mouse.embryo.seurat <- CreateSeuratObject(counts = mouse.embryo, project = "BMIN", min.cells = 0, min.features = 0)
+
+```
+
+## Testing Practicum 17 read in 
+``` {r eval = TRUE}
+library(GEOquery)
+library(oligo)
+library(limma)
+library(viridis)
+library(hgu133plus2.db)
+library(ggplot2)
+library(gplots)
+
+getGEOSuppFiles("GSE76381")
+untar("./GSE76381/GSE76381_RAW.tar", exdir = "./GSE76381/data")
+
+celFiles <- list.celfiles("./GSE76381/data", full.names = TRUE, listGzipped = TRUE)
+raw.data <- read.celfiles(celFiles)
+
+pData(raw.data)
+
+
+gse <- getGEO("GSE76381", GSEMatrix = TRUE)
+show(gse)
+
+```
+
+

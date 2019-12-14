@@ -1,0 +1,1 @@
+{"frames":[{"character_number":0,"end_character_number":0,"end_line_number":0,"file":"","func":"readSEER(year = 2005, state = \"Kentucky\", cancer = \"Larynx\", \n    fips = fipslookup)","line_number":0}],"message":"Error in readSEER(year = 2005, state = \"Kentucky\", cancer = \"Larynx\",  : \n  argument \"file\" is missing, with no default\n"}

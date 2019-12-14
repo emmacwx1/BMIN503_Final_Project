@@ -1,0 +1,9 @@
+"0","seerData <- readSEER(year=2005,state=""Kentucky"",cancer=""Larynx"",fips=fipslookup)
+"
+"1","[1]"
+"1"," ""Please specify SEER TXT file(s) to read from. Be sure the specified file includes the cancer and state of interest."""
+"1","
+"
+"2","Error in readSEER(year = 2005, state = ""Kentucky"", cancer = ""Larynx"",  : 
+  argument ""file"" is missing, with no default
+"

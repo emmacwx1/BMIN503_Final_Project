@@ -1,0 +1,17 @@
+---
+title: "test"
+author: "Emma Chen"
+date: "12/13/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(UScancer)
+
+seerData <- readSEER(year=2005,state="Kentucky",cancer="Larynx",fips=fipslookup)
+```
+
