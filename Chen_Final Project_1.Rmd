@@ -38,7 +38,8 @@ Data analysis workflow for cytometry data have a few steps:
 
 
 ### Results
-Step 0.1: run libraries needed for analysis
+
+## Step 0.1: run libraries needed for analysis
 ```{r}
 library(FlowSOM)
 library(flowCore)
@@ -55,19 +56,19 @@ library(ggExtra)
 library(premessa)
 ```
 
-Step 0.2: set and confirm working directory
+## Step 0.2: set and confirm working directory
 ```{r eval=FALSE}
 setwd("C:/Users/Emma/Documents/BMIN503_Final_Project")
 getwd()
 ```
 
-Step 1: use package Premessa 's concatenate_fcs_files function to concatenate files. Out put as .fcs
+## Step 1: use package Premessa 's concatenate_fcs_files function to concatenate files. Out put as .fcs
 ```{r}
 concat <-  dir(pattern="*.fcs")
 concatenate_fcs_files(concat, output.file = "C:/Users/Emma/Documents/BMIN503_Final_Project/concatnated.fcs")
 ```
 
-Step 2: Cleanup data for analysis:
+## Step 2: Cleanup data for analysis:
 look at concatenated fcs file first to find out markers names.
 replace with fcs file name of dataset
 Read in concatenated FCS file
@@ -88,7 +89,7 @@ columns need to be renamed: 7:31
 columns need to be used for SOM
 There are 25 markers for later analysis: "CD45RA, CXCR5, PD1, IgG4, dump, CD8, CD127, Tox, Tim3, Eomes, TCF1, CD38, CCR7, CTLA-4, CD226, CD39, FoxP3, Ki67, CD27, CD4, CD73,TIGIT, T-bet, CD28, CD3"
 
-Step 3.1: convert .fcs to flowFrame and to Matrix, define columns of protein markers of interest as previously discussed.
+## Step 3.1: convert .fcs to flowFrame and to Matrix, define columns of protein markers of interest as previously discussed.
 ```{r}
 all.data = exprs(test.data)
 scaled.data = all.data[, c(7:31)]
@@ -97,7 +98,7 @@ overall_seed = 46
 colnames(scaled.data) <- c("CD45RA", "CXCR5", "PD1", "IgG4", "dump", "CD8", "CD127", "Tox", "Tim3", "Eomes", "TCF1", "CD38", "CCR7", "CTLA-4", "CD226", "CD39", "FoxP3", "Ki67", "CD27", "CD4", "CD73", "TIGIT", "T-bet", "CD28", "CD3")
 ```
 
-Step 3.2a Run t-SNE on markers of interest, reduce dimension
+## Step 3.2a Run t-SNE on markers of interest, reduce dimension
 ```{r}
 set.seed(overall_seed)
 mytSNE = Rtsne(
@@ -127,11 +128,11 @@ ggplot(tSNE.plot) + coord_fixed(ratio = graphical.ratio.t) +
 
 ```
 
-note: 1 file with 8000 events, size 1.5Mb, took around 10mins to run 
+## note: 1 file with 8000 events, size 1.5Mb, took around 10mins to run 
 (will compare to UMAP later)
 
 
-Step 4: cluster tSNE plot with flowSOM, color code clusters. clusters = 20 based on previous manual gating.
+## Step 4: cluster tSNE plot with flowSOM, color code clusters. clusters = 20 based on previous manual gating.
 ```{r}
 # Run FlowSOM on the t-SNE axes
 tSNE.data.mat <- as.matrix(tSNE.data)
@@ -173,7 +174,7 @@ ggplot(tSNE.plot) + coord_fixed(ratio = graphical.ratio.t) +
   labs(caption = "Data from Divij Mathew/Wherry Lab")
 ```
 
-step 5: immune profile each cluster with MEM. MEM is good at look at markers that do NOT have a big variation across cells.
+## step 5: immune profile each cluster with MEM. MEM is good at look at markers that do NOT have a big variation across cells.
 ```{r}
 # Run MEM on the FlowSOM clusters from t-SNE
 cluster = as.numeric(as.vector((tSNE.FlowSOM.clusters)))
@@ -209,9 +210,9 @@ build.heatmaps(
 )
 ```
 
-Now let's look at how UMAP reduce dimensionality of the SAME dataset for visualization.
+## Now let's look at how UMAP reduce dimensionality of the SAME dataset for visualization.
 
-Step 3.2b: using UMAP to reduce dimensionality
+## Step 3.2b: using UMAP to reduce dimensionality
 ```{r}
 # prepare data for use in UMAP
 data <- lapply(lapply(test, read.FCS), exprs) #list apply to read FCS file (read.FCS) and to make it readable (exprs), return list for UMAP. apply takes in 3 arguments: 1 data matrix, 2 row/column operation, function to be applied 
@@ -259,12 +260,12 @@ ggplot(UMAP.plot, aes(x = x, y = y)) + coord_fixed(ratio = graphical.ratio)  +
   theme_bw() + 
   labs(caption = "Data from Divij Mathew/Wherry Lab")
 ```
-Note: same file with 8000 events, size 1.5Mb took 1mins to run a UMAP map.UMAP has timestamp 
+## Note: same file with 8000 events, size 1.5Mb took 1mins to run a UMAP map.UMAP has timestamp 
 One advantage of UMAP over tSNE as a dimension reduction tool is that UMAP has shorter run time. 
 
 
 
-Step 4: cluster UMAP plot with flowSOM, color code clusters. clusters = 20 based on previous manual gating.
+## Step 4: cluster UMAP plot with flowSOM, color code clusters. clusters = 20 based on previous manual gating.
 ```{r FlowSOM on UMAP}
 # Run FlowSOM on the UMAP axes
 umap.matrix <- as.matrix(umap.data)
@@ -303,11 +304,11 @@ ggplot(UMAP.plot) + coord_fixed(ratio=graphical.ratio) +
   guides(colour = guide_legend(override.aes = list(size=5)))+
   labs(caption = "Data from Divij Mathew/Wherry Lab")
 ```
-Note: 
+## Note: 
 comparing this dimension reduction graph from UMAP, we can see more distinct clusters than tSNE's.
 Another advantage of UMAP over tSNE is that it can show inter-cluster relation better, which is very important if dataset size increases. 
 
-step 5: immune profile each cluster with MEM. MEM is good at look at markers that do NOT have a big variation across cells.
+## step 5: immune profile each cluster with MEM. MEM is good at look at markers that do NOT have a big variation across cells.
 ```{r MEM on UMAP/FlowSOM Clusters}
 # Run MEM on the FlowSOM clusters from UMAP
 cluster = as.numeric(as.vector((FlowSOM.clusters))) #clusters from UMAP and FlowSOM clustering
@@ -342,9 +343,9 @@ build.heatmaps(
 )
 ```
 
-RMSD calculate pair-wise cluster relationship. It determines which markers the population share in common and then calculates the percent maximum RMSD between the two populations. the more red means the two clusters are more similar. With this pair-wise comparison for different population, we can then look into the two cluster that are similar, from UMAP and from tSNE, look at their immune profile. 
+## RMSD calculate pair-wise cluster relationship. It determines which markers the population share in common and then calculates the percent maximum RMSD between the two populations. the more red means the two clusters are more similar. With this pair-wise comparison for different population, we can then look into the two cluster that are similar, from UMAP and from tSNE, look at their immune profile. 
 
-future directions: compare clusters from different timepoints of the same patients, and between patients. the more red means the clusters have more enrichment MEM scores in common. 
+## future directions: compare clusters from different timepoints of the same patients, and between patients. the more red means the clusters have more enrichment MEM scores in common. 
 ```{r RMSD for All Clusters}
 # RMSD to compare labels from all populations, cluster from TF vs clusters
 tf.MEM.scores = as.data.frame(MEM.values.tf[[5]])
@@ -364,7 +365,7 @@ RMSD_vals <-
 
 Now we have 20 clusters from either tSNE+flowSOM's MEM, or from UMAP+flowSOME's MEM, then we can look at how these clusters express different proteins using machine learning. 
 
-1st: PCA
+## 1st: PCA
 
 Cleaning data. Import from txt generate from MEM in the output files' folder. Add a column containing clusterIDs (1-20) for our reference and analysis.
 
@@ -388,7 +389,7 @@ t <- t %>%
   mutate(clusterID = cluster)
 ```
 
-PCA analysis of 20 clusters from UMAP+flowSOM' MEM. 
+## PCA analysis of 20 clusters from UMAP+flowSOM' MEM. 
 ```{r}
 tMEM.pca <- prcomp(t[, 1:25], scale = TRUE)
 summary(tMEM.pca)
@@ -400,7 +401,7 @@ ggbiplot(tMEM.pca, groups = t$clusterID, circle = TRUE) +
 ggscreeplot(tMEM.pca)
 ```
 
-Next look at UMAP+flowSOM+MEM clusters.
+## Next look at UMAP+flowSOM+MEM clusters.
 ```{r}
 u <- read.table(file = "C:/Users/Emma/Documents/BMIN503_Final_Project/output files/2019-12-13_161441 Pre-scaled MEM matrix.txt", #Name of file
                 header = TRUE, #Does the file have a header (names of columns)?
@@ -418,7 +419,7 @@ u <- u %>%
   mutate(clusterID = cluster2)
 ```
 
-PCA analysis of 20 clusters from UMAP+flowSOM' MEM. 
+## PCA analysis of 20 clusters from UMAP+flowSOM' MEM. 
 ```{r}
 uMEM.pca <- prcomp(u[, 1:25], scale = TRUE)
 summary(uMEM.pca)
@@ -429,7 +430,7 @@ ggbiplot(uMEM.pca, groups = u$clusterID, circle = TRUE) +
 
 ggscreeplot(uMEM.pca)
 ```
-Notes: comparing PCA of UMAP and tSNE clusters, cluster's immune profiles and distribution is quite different. (cluster number of cells sharing similar immune profil might be different because they are from two different algorithm)
+## Notes: comparing PCA of UMAP and tSNE clusters, cluster's immune profiles and distribution is quite different. (cluster number of cells sharing similar immune profil might be different because they are from two different algorithm)
 
 
 I am also interested to see specific protein relationship across different time points: 
@@ -479,7 +480,7 @@ ggplot(data = c2, aes(x = TIGIT, y = CD226 )) +
 ```
 
 repeat this data cleaning and analysis for c3, c4 and c5
-c3: first cycle with both JAK and anti-PD1
+## c3: first cycle with both JAK and anti-PD1
 ```{r}
 c3 <-  dir(pattern="export_export3_Exhastion_3A_030.fcs")
 
@@ -522,7 +523,7 @@ ggplot(data = c3, aes(x = TIGIT, y = CD226 )) +
 ```
 
 
-c4: last/second cycle with both JAK and anti-PD1
+## c4: last/second cycle with both JAK and anti-PD1
 ```{r}
 c4 <-  dir(pattern="export_export3_Exhastion_4A_031.fcs")
 
@@ -564,7 +565,7 @@ ggplot(data = c4, aes(x = TIGIT, y = CD226 )) +
 
 ```
 
-c5: first second getting back to only anti-PD1
+## c5: first second getting back to only anti-PD1
 ```{r}
 c5 <-  dir(pattern="export_export3_Exhastion_4A_031.fcs")
 
@@ -606,7 +607,7 @@ ggplot(data = c5, aes(x = TIGIT, y = CD226 )) +
 
 ```
 
-###Discussion: 
+### Discussion: 
 The two previous methods use viSNE and UMAP to reduce dataset dimension. 
 
 There are a few limitations of viSNE: 
@@ -634,7 +635,7 @@ Completed tasks are:
 -Depends on study goals, data variation, dataset size, etc.
 4)look at 20 clusters' protein expression with PCA 
 
-###Future directions: 
+### Future directions: 
 1-Immune profile changes with combined therapy vs only ICB
   -Differentiate each timepoint from concatenated file
   -Investigate how cluster changes according to timepoints
